@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option csharp_namespace = "Grpc.ChatServer";
+
+package chat;
+
+service Chat {
+  rpc EnterChat (EnterRequest) returns (stream ChatMessage);
+  rpc SendMessage (ChatMessage) returns (MessageResponse);
+}
+ 
+message EnterRequest {
+  string name = 1;
+}
+ 
+message ChatMessage {
+  string message = 1;
+}
+
+message MessageResponse {
+  bool ok = 1;
+}
