@@ -2,36 +2,42 @@
 using Grpc.Core;
 using Grpc.Net.Client;
 
+// Канал подключения к серверу
 using var channel = GrpcChannel.ForAddress("http://localhost:5085");
 
 var client = new Chat.ChatClient(channel);
 
-Console.Write("Name: ");
+Console.Write("Имя пользователя: ");
 var name = Console.ReadLine();
 
 var reply = client.EnterChat(new EnterRequest { Name = name });
 
-var writeThread = new Thread(async () =>
+// Создаём поток, в котором принимаются сообщения с сервера
+var messageReceivingTask = Task.Run(async () =>
 {
-    while (true)
+    try
     {
         await foreach (var message in reply.ResponseStream.ReadAllAsync())
         {
             Console.WriteLine(message.Message);
         }
     }
+    catch (RpcException e)
+    {
+        Console.WriteLine($"Ошибка при получении сообщения: {e.Message}");
+    }
 });
-
-writeThread.Start();
 
 
 while (true)
 {
+    // Считываем значение из консоли
     var message = Console.ReadLine();
 
+    // Устанавливаем курсор
     Console.SetCursorPosition(0, Console.CursorTop - 1);
     ClearLine();
-
+    // Отправляем сообщение на сервер
     client.SendMessage(new ChatMessage { Message = $"{DateTime.UtcNow}, {name}: {message}" });
 }
 
